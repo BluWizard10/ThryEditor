@@ -238,6 +238,8 @@ namespace Thry.ThryEditor
 		public static readonly GUIStyle thryIcon = CreateIconStyle(LoadTextureByGUID(EditorGUIUtility.isProSkin ? RESOURCE_GUID.ICON_THRY : RESOURCE_GUID.ICON_THRY_INV));
 		public static readonly GUIStyle github = CreateIconStyle(LoadTextureByGUID(EditorGUIUtility.isProSkin ? RESOURCE_GUID.ICON_GITHUB : RESOURCE_GUID.ICON_GITHUB_INV));
 		public static readonly GUIStyle video = CreateVideoIconStyle();
+		public static readonly GUIStyle globallinked = CreateIconStyle(LoadTextureByGUID(EditorGUIUtility.isProSkin ? RESOURCE_GUID.ICON_GLOBALLINK : RESOURCE_GUID.ICON_GLOBALLINK_INV));
+		public static readonly GUIStyle globallinked_active = CreateIconStyle(LoadTextureByGUID(RESOURCE_GUID.ICON_GLOBALLINK_ACTIVE));
 
 		static GUIStyle CreateVideoIconStyle()
 		{

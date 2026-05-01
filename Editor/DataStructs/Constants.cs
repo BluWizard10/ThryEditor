@@ -11,6 +11,7 @@ namespace Thry.ThryEditor
         public const string GRADIENT_INFO_FILE = "Thry/gradients";
 
         public const string LINKED_MATERIALS_FILE = "Thry/linked_materials.json";
+        public const string GLOBAL_LINKS_FILE = "Thry/global_links.json";
     }
 
     public class URL
@@ -35,5 +36,8 @@ namespace Thry.ThryEditor
         public const string ICON_LINK_OFF = "25bc194689aa03c49b3c632ab4af0781";
         public const string ICON_LINK_RATIO = "d0242b7a9ff59494da113c7559c3a824";
         public const string ICON_LINK_DELTA = "344db1c76676f64489b9a2e2c28289ae";
+        public const string ICON_GLOBALLINK = "488a429e3d246724289650df3ddc8c9c";
+        public const string ICON_GLOBALLINK_INV = "592f6e7d0f1603f45a32f808e66126ed";
+        public const string ICON_GLOBALLINK_ACTIVE = "add1208afaaaeea41aa0e074830b2288";
     }
 }

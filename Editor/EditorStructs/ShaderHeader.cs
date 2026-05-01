@@ -49,7 +49,10 @@ namespace Thry.ThryEditor
                 GUILayout.Space(2);
             }
             if (EditorGUI.EndChangeCheck())
+            {
                 UpdateLinkedMaterials();
+                GlobalLinker.OnSectionChanged(this);
+            }
             DrawingData.LastGuiObjectHeaderRect = headerRect;
             DrawingData.LastGuiObjectRect = headerRect;
         }
@@ -230,7 +233,12 @@ namespace Thry.ThryEditor
             DrawDowdownSettings(buttonRect, e);
 
             buttonRect.x -= step;
+            DrawGlobalLinkSettings(buttonRect, e);
+
+            /* OBSOLETE: Material Linking
+            buttonRect.x -= step;
             DrawLinkSettings(buttonRect, e);
+            */
 
             bool hasVideo = options.button_video != null && options.button_video.condition_show.Test();
             if (hasVideo)
@@ -370,6 +378,19 @@ namespace Thry.ThryEditor
             }
         }
 
+        private void DrawGlobalLinkSettings(Rect rect, Event e)
+        {
+            Material self = (Material)ShaderEditor.Active.CurrentProperty.MaterialProperty.targets[0];
+            bool isGloballyLinked = GlobalLinker.IsGloballyLinked(self, this.MaterialProperty.name);
+            GUIStyle icon = isGloballyLinked ? Icons.globallinked_active : Icons.globallinked;
+            if (GUILib.Button(rect, icon))
+            {
+                ShaderEditor.Input.Use();
+                GlobalLinker.Popup(this);
+            }
+        }
+
+        /* OBSOLETE: Only expose this for debugging purposes. Use Global Linking instead!
         private void DrawLinkSettings(Rect rect, Event e)
         {
             if (GUILib.Button(rect, Icons.linked, Color.cyan, MaterialLinker.IsLinked(ShaderEditor.Active.CurrentProperty.MaterialProperty)))
@@ -379,6 +400,7 @@ namespace Thry.ThryEditor
                 MaterialLinker.Popup(rect, linked_materials, ShaderEditor.Active.CurrentProperty.MaterialProperty);
             }
         }
+        */
 
         void ShowHeaderContextMenu(Rect position, ShaderHeader property, Material[] materials)
         {
@@ -393,6 +415,7 @@ namespace Thry.ThryEditor
                 if (linked_materials != null)
                     foreach (Material m in linked_materials)
                         property.CopyTo(m, true);
+                GlobalLinker.OnSectionChanged(property);
 
                 Undo.SetCurrentGroupName($"Reset {property.Content.text} of {ShaderEditor.Active.Materials[0].name}");
                 Undo.CollapseUndoOperations(undoGroup);
@@ -413,6 +436,7 @@ namespace Thry.ThryEditor
 
                     property.CopyFrom(Mediator.copy_part);
                     property.UpdateLinkedMaterials();
+                    GlobalLinker.OnSectionChanged(property);
 
                     Undo.SetCurrentGroupName($"Paste {property.Content.text} of {ShaderEditor.Active.Materials[0].name}");
                     Undo.CollapseUndoOperations(undoGroup);
@@ -428,6 +452,7 @@ namespace Thry.ThryEditor
                     var propsToIgnore = new HashSet<ShaderPropertyType> { ShaderPropertyType.Texture };
                     property.CopyFrom(Mediator.copy_part, skipPropertyTypes: propsToIgnore);
                     property.UpdateLinkedMaterials();
+                    GlobalLinker.OnSectionChanged(property);
 
                     Undo.SetCurrentGroupName($"Paste* {property.Content.text} of {ShaderEditor.Active.Materials[0].name}");
                     Undo.CollapseUndoOperations(undoGroup);
@@ -452,6 +477,7 @@ namespace Thry.ThryEditor
 
                         property.CopyFrom(Mediator.copy_part, skipPropertyNames: ignoreProperties);
                         property.UpdateLinkedMaterials();
+                        GlobalLinker.OnSectionChanged(property);
 
                         Undo.SetCurrentGroupName($"Paste** {property.Content.text} of {ShaderEditor.Active.Materials[0].name}");
                         Undo.CollapseUndoOperations(undoGroup);

@@ -1001,6 +1001,11 @@ namespace Thry.ThryEditor
             if (!isLocking && Config.Instance.fixKeywordsWhenLocking)
                 ShaderEditor.FixKeywords(materialsToChangeLock);
 
+            if (!isLocking)
+            {
+                foreach (Material m in materialsToChangeLock) GlobalLinker.ApplyAllLinksToMaterial(m);
+            }
+            
             AssetDatabase.StopAssetEditing();
             //unity now compiles all the shaders
 
