@@ -40,6 +40,7 @@ namespace Thry.ThryEditor
             s = s.Replace("''", "\"");
             PropertyOptions options = Parser.Deserialize<PropertyOptions>(s);
             if (options == null) return Default;
+            if (!string.IsNullOrEmpty(options.tooltip)) options.tooltip = options.tooltip.Replace("\\n", "\n").Replace("\\t", "\t").Replace("<br/>", "\n").Replace("<br>", "\n");
             // The following could be removed since the parser can now handle it. leaving it in for now /shrug
             if (options.condition_showS != null)
             {

@@ -923,6 +923,9 @@ namespace Thry.ThryEditor
 
             readonly static Vector2 PADDING = new Vector2(10, 10);
 
+            private static GUIStyle _wrapStyle;
+            private static GUIStyle WrapStyle => _wrapStyle ?? (_wrapStyle = new GUIStyle(EditorStyles.label) { wordWrap = true, richText = true });
+
             public Tooltip(string text)
             {
                 content = new GUIContent(text);
@@ -955,7 +958,13 @@ namespace Thry.ThryEditor
 
             private void CalculatePositions(Rect hoverOverRect)
             {
-                Vector2 contentSize = EditorStyles.label.CalcSize(content);
+                const float SAFETY_MARGIN = 20f;
+                float maxWidth = Mathf.Max(200f, EditorGUIUtility.currentViewWidth - PADDING.x - SAFETY_MARGIN);
+
+                Vector2 naturalSize = EditorStyles.label.CalcSize(content);
+                float width = Mathf.Min(naturalSize.x, maxWidth);
+                float height = WrapStyle.CalcHeight(content, width);
+                Vector2 contentSize = new Vector2(width, height);
                 Vector2 containerPosition = new Vector2(Event.current.mousePosition.x - contentSize.x / 2 - PADDING.x / 2, hoverOverRect.y - contentSize.y - PADDING.y - 3);
 
                 containerPosition.x = Mathf.Max(0, containerPosition.x);
@@ -968,7 +977,7 @@ namespace Thry.ThryEditor
             public void Draw()
             {
                 EditorGUI.DrawRect(containerRect, Colors.backgroundDark);
-                EditorGUI.LabelField(contentRect, content);
+                EditorGUI.LabelField(contentRect, content, WrapStyle);
                 isSelected = false;
             }
         }
