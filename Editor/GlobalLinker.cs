@@ -68,9 +68,37 @@ namespace Thry.ThryEditor
         public GlobalLink[] links = new GlobalLink[0];
     }
 
+    [InitializeOnLoad]
     public class GlobalLinker
     {
         private static List<GlobalLink> s_data;
+
+        static GlobalLinker()
+        {
+            Undo.undoRedoPerformed += OnUndoRedoPerformed;
+        }
+
+        private static void OnUndoRedoPerformed()
+        {
+            Load();
+            bool dirty = false;
+            foreach (GlobalLink link in s_data)
+            {
+                if (link == null || link.properties == null || link.subscribedMaterialGuids == null) continue;
+
+                Material truth = null;
+                foreach (string guid in link.subscribedMaterialGuids)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    Material m = AssetDatabase.LoadAssetAtPath<Material>(path);
+                    if (m != null) { truth = m; break; }
+                }
+                if (truth == null) continue;
+
+                if (RecaptureFromMaterial(link, truth)) dirty = true;
+            }
+            if (dirty) Save();
+        }
 
         private static void Load()
         {
@@ -243,8 +271,67 @@ namespace Thry.ThryEditor
             {
                 if (link == null || link.subscribedMaterialGuids == null) continue;
                 if (!link.subscribedMaterialGuids.Contains(guid)) continue;
-                ApplyLinkToMaterial(link, material);
+                ApplyLinkToMaterial(link, material, recordUndo: false);
             }
+        }
+
+        private static bool RecaptureFromMaterial(GlobalLink link, Material material)
+        {
+            bool changed = false;
+            foreach (GlobalLinkPropertyValue pv in link.properties)
+            {
+                if (!material.HasProperty(pv.name)) continue;
+                switch (pv.type)
+                {
+                    case "Float":
+                        float f = material.GetFloat(pv.name);
+                        if (pv.floatValue != f) { pv.floatValue = f; changed = true; }
+                        break;
+                    case "Int":
+                        #if UNITY_2022_1_OR_NEWER
+                        int i = material.GetInteger(pv.name);
+                        #else
+                        int i = (int)material.GetFloat(pv.name);
+                        #endif
+                        if (pv.intValue != i) { pv.intValue = i; changed = true; }
+                        break;
+                    case "Color":
+                        Color c = material.GetColor(pv.name);
+                        if (pv.colorValue == null || pv.colorValue.Length != 4 ||
+                            pv.colorValue[0] != c.r || pv.colorValue[1] != c.g ||
+                            pv.colorValue[2] != c.b || pv.colorValue[3] != c.a)
+                        {
+                            pv.colorValue = new float[] { c.r, c.g, c.b, c.a };
+                            changed = true;
+                        }
+                        break;
+                    case "Vector":
+                        Vector4 v = material.GetVector(pv.name);
+                        if (pv.vectorValue == null || pv.vectorValue.Length != 4 ||
+                            pv.vectorValue[0] != v.x || pv.vectorValue[1] != v.y ||
+                            pv.vectorValue[2] != v.z || pv.vectorValue[3] != v.w)
+                        {
+                            pv.vectorValue = new float[] { v.x, v.y, v.z, v.w };
+                            changed = true;
+                        }
+                        break;
+                    case "Texture":
+                        Texture tex = material.GetTexture(pv.name);
+                        string newGuid = tex != null ? AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(tex)) : "";
+                        if (pv.textureGuid != newGuid) { pv.textureGuid = newGuid; changed = true; }
+                        Vector2 scale = material.GetTextureScale(pv.name);
+                        Vector2 offset = material.GetTextureOffset(pv.name);
+                        if (pv.textureScaleAndOffset == null || pv.textureScaleAndOffset.Length != 4 ||
+                            pv.textureScaleAndOffset[0] != scale.x || pv.textureScaleAndOffset[1] != scale.y ||
+                            pv.textureScaleAndOffset[2] != offset.x || pv.textureScaleAndOffset[3] != offset.y)
+                        {
+                            pv.textureScaleAndOffset = new float[] { scale.x, scale.y, offset.x, offset.y };
+                            changed = true;
+                        }
+                        break;
+                }
+            }
+            return changed;
         }
 
         private static void CapturePropertiesFromSection(GlobalLink link, ShaderGroup section)
@@ -324,7 +411,7 @@ namespace Thry.ThryEditor
             return pv;
         }
 
-        private static void ApplyLinkToMaterial(GlobalLink link, Material material, bool recordUndo = false)
+        private static void ApplyLinkToMaterial(GlobalLink link, Material material, bool recordUndo)
         {
             if (recordUndo) Undo.RecordObject(material, "Update Global Link \"" + link.name + "\"");
             foreach (GlobalLinkPropertyValue pv in link.properties)
