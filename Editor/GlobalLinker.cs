@@ -144,7 +144,7 @@ namespace Thry.ThryEditor
             string guid = UnityHelper.GetGUID(material);
             if (!link.subscribedMaterialGuids.Contains(guid)) link.subscribedMaterialGuids = link.subscribedMaterialGuids.Append(guid).ToArray();
 
-            if (applyLinkToMaterial) ApplyLinkToMaterial(link, material);
+            if (applyLinkToMaterial) ApplyLinkToMaterial(link, material, recordUndo: true);
 
             Save();
             RequestRepaint();
@@ -190,7 +190,7 @@ namespace Thry.ThryEditor
                 if (subscriberGuid == selfGuid) continue;
                 string path = AssetDatabase.GUIDToAssetPath(subscriberGuid);
                 Material target = AssetDatabase.LoadAssetAtPath<Material>(path);
-                if (target != null) ApplyLinkToMaterial(link, target);
+                if (target != null) ApplyLinkToMaterial(link, target, recordUndo: true);
             }
         }
 
@@ -206,7 +206,7 @@ namespace Thry.ThryEditor
                 if (subscriberGuid == selfGuid) continue;
                 string path = AssetDatabase.GUIDToAssetPath(subscriberGuid);
                 Material target = AssetDatabase.LoadAssetAtPath<Material>(path);
-                if (target != null) ApplyLinkToMaterial(link, target);
+                if (target != null) ApplyLinkToMaterial(link, target, recordUndo: true);
             }
             RequestRepaint();
         }
@@ -324,8 +324,9 @@ namespace Thry.ThryEditor
             return pv;
         }
 
-        private static void ApplyLinkToMaterial(GlobalLink link, Material material)
+        private static void ApplyLinkToMaterial(GlobalLink link, Material material, bool recordUndo = false)
         {
+            if (recordUndo) Undo.RecordObject(material, "Update Global Link \"" + link.name + "\"");
             foreach (GlobalLinkPropertyValue pv in link.properties)
             {
                 if (!material.HasProperty(pv.name)) continue;
