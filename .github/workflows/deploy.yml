@@ -15,7 +15,7 @@ on:
       - '*'
 
 permissions:
-    contents: write # commit to master, force-move the tag, and create the release
+  contents: write # commit to master, force-move the tag, and create the release
 
 jobs:
   release:
